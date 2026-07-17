@@ -1,5 +1,5 @@
 {
-  "name": "cruce-service",
+  "name": "limpiezabd_sedes-service",
   "version": "1.0.0",
   "description": "Microservicio Leoncito: limpieza/dedup de teléfonos por DNI y (futuro) cruce cartera↔gestión por DNI+teléfono.",
   "main": "index.js",

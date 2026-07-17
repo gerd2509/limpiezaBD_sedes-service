@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// cruce-service — Microservicio Leoncito
+// limpiezaBD_sedes-service — Microservicio Leoncito
 // Procesos pesados que antes corrían en el navegador (dashboard). Empieza con la
 // LIMPIEZA/DEDUP de teléfonos por DNI (módulo Limpieza BBDD). Luego crecerá con el
 // cruce cartera↔gestión por DNI+teléfono (avance-cartera, embudos, comparativo).
@@ -111,7 +111,7 @@ function filasDe(req) {
 }
 
 // ── Endpoints ───────────────────────────────────────────────────────────────
-app.get('/health', (_req, res) => res.json({ ok: true, service: 'cruce-service', ts: new Date().toISOString() }));
+app.get('/health', (_req, res) => res.json({ ok: true, service: 'limpiezaBD_sedes-service', ts: new Date().toISOString() }));
 
 // POST /limpieza/sedes  (multipart `archivo`  o  JSON {filas})  [?format=xlsx]
 app.post('/limpieza/sedes', upload.single('archivo'), (req, res) => {
@@ -146,4 +146,4 @@ app.post('/limpieza/sedes', upload.single('archivo'), (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`✅ cruce-service escuchando en http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`✅ limpiezaBD_sedes-service escuchando en http://localhost:${PORT}`));

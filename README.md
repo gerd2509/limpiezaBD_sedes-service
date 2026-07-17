@@ -1,4 +1,4 @@
-# cruce-service
+# limpiezaBD_sedes-service
 
 Microservicio de procesos pesados de Leoncito (antes corrían en el navegador).
 
@@ -17,8 +17,8 @@ npm start          # http://localhost:4002
 
 ## Correr con Docker
 ```bash
-docker build -t cruce-service .
-docker run -p 4002:4002 cruce-service
+docker build -t limpiezabd_sedes-service .
+docker run -p 4002:4002 limpiezabd_sedes-service
 ```
 
 ## Prueba rápida
