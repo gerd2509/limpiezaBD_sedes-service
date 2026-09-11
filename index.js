@@ -32,6 +32,8 @@ const FRAG_TEL = [
 ];
 // Cabeceras que NUNCA son teléfono (evita falsos positivos con DNI/documento).
 const FRAG_NO_TEL = ['documento', 'dni', 'docidentidad'];
+// Mínimo de dígitos para considerar un número como teléfono (2-3 díg. = basura; celular=9, fijo=7).
+const MIN_TEL_DIGITOS = 6;
 const COLUMNA_DNI = 'Dni';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -67,7 +69,9 @@ function extraerNumeros(valor) {
   for (const parte of t.split(/[\s/,;|&·\-]+/)) {
     const d = parte.replace(/\D/g, '');
     if (!d) continue;
-    for (const n of separarConcatenados(d)) out.push(n);
+    for (const n of separarConcatenados(d)) {
+      if (n.length >= MIN_TEL_DIGITOS) out.push(n);   // descarta números demasiado cortos (2-3 díg.)
+    }
   }
   return out;
 }
