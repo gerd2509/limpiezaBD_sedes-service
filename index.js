@@ -25,6 +25,13 @@ const COLUMNAS_TELEFONO = [
   'CEL actual', 'Telefono', 'Fax', 'Movil', 'Nextel',
   'ProvedorExterno1', 'ProvedorExterno2', 'ProvedorExterno3',
 ];
+// Fragmentos de cabecera que identifican una columna de TELÉFONOS (además de las conocidas).
+const FRAG_TEL = [
+  'celular', 'telefono', 'movil', 'fono', 'whatsapp', 'nextel', 'fax',
+  'provedorexterno', 'proveedorexterno', 'cel', 'numero', 'numeros',
+];
+// Cabeceras que NUNCA son teléfono (evita falsos positivos con DNI/documento).
+const FRAG_NO_TEL = ['documento', 'dni', 'docidentidad'];
 const COLUMNA_DNI = 'Dni';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -33,11 +40,36 @@ function buscarHeader(headers, objetivo) {
   const o = norm(objetivo);
   return headers.find((h) => norm(h) === o);
 }
+// Detecta TODAS las columnas de teléfono: conocidas + cabecera con fragmento de teléfono; excluye DNI.
+function detectarTelHeaders(headers, dniHeader) {
+  const conocidas = new Set(COLUMNAS_TELEFONO.map((c) => norm(c)));
+  return headers.filter((h) => {
+    if (dniHeader && h === dniHeader) return false;
+    const n = norm(h);
+    if (FRAG_NO_TEL.some((f) => n.includes(f))) return false;
+    if (conocidas.has(n)) return true;
+    return FRAG_TEL.some((f) => n.includes(f));
+  });
+}
+// Separa dígitos pegados sin separador: celulares Perú de 9 dígitos que empiezan en 9.
+function separarConcatenados(d) {
+  if (d.length <= 11) return [d];
+  const bloques = [];
+  let i = 0;
+  while (i + 9 <= d.length && d[i] === '9') { bloques.push(d.slice(i, i + 9)); i += 9; }
+  return (i === d.length && bloques.length > 1) ? bloques : [d];
+}
 function extraerNumeros(valor) {
   if (valor === null || valor === undefined) return [];
   const t = valor.toString().trim();
   if (!t) return [];
-  return t.split(/[\/,;\n\r|]+/).map((p) => p.replace(/\D/g, '')).filter((p) => p.length > 0);
+  const out = [];
+  for (const parte of t.split(/[\s/,;|&·\-]+/)) {
+    const d = parte.replace(/\D/g, '');
+    if (!d) continue;
+    for (const n of separarConcatenados(d)) out.push(n);
+  }
+  return out;
 }
 
 // ── Núcleo: dedup de teléfonos por DNI (modo "sedes") ───────────────────────
@@ -46,9 +78,8 @@ function limpiarSedes(filas) {
 
   const headersOriginales = Object.keys(filas[0]);
   const dniHeader = buscarHeader(headersOriginales, COLUMNA_DNI);
-  const telHeaders = COLUMNAS_TELEFONO.map((c) => buscarHeader(headersOriginales, c)).filter(Boolean);
+  const telHeaders = detectarTelHeaders(headersOriginales, dniHeader);
 
-  if (!dniHeader) throw new Error(`No se encontró la columna "${COLUMNA_DNI}" en el archivo.`);
   if (!telHeaders.length) throw new Error('No se encontró ninguna columna de teléfonos para limpiar.');
 
   const headersBase = headersOriginales.filter((h) => !telHeaders.includes(h));
@@ -57,7 +88,7 @@ function limpiarSedes(filas) {
   let totalNumerosAntes = 0;
 
   filas.forEach((fila, idx) => {
-    const dniRaw = (fila[dniHeader] ?? '').toString().trim();
+    const dniRaw = dniHeader ? (fila[dniHeader] ?? '').toString().trim() : '';
     const clave = dniRaw !== '' ? `dni:${dniRaw}` : `fila:${idx}`;
     let g = grupos.get(clave);
     if (!g) { g = { base: { ...fila }, numeros: [] }; grupos.set(clave, g); }
