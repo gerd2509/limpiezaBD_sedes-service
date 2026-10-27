@@ -5,16 +5,16 @@
 // cruce cartera↔gestión por DNI+teléfono (avance-cartera, embudos, comparativo).
 // ─────────────────────────────────────────────────────────────────────────────
 const express = require('express');
-const cors = require('cors');
 const compression = require('compression');
 const multer = require('multer');
 const XLSX = require('xlsx');
+const { aplicarSeguridad } = require('./security');
 
 const app = express();
 const PORT = process.env.PORT || 4002;
 
 app.use(compression());   // gzip: comprime las respuestas JSON (5-10× menos bytes)
-app.use(cors());
+aplicarSeguridad(app);    // trust proxy + helmet + CORS restringido + rate limit
 app.use(express.json({ limit: '25mb' }));
 
 // Subida de archivos en memoria (hasta 60 MB por Excel).
@@ -179,7 +179,7 @@ app.post('/limpieza/sedes', upload.single('archivo'), (req, res) => {
     res.json({ ok: true, stats: r.stats, headers: r.headers, filas: r.filas, preview });
   } catch (e) {
     console.error('❌ /limpieza/sedes:', e.message);
-    res.status(500).json({ ok: false, message: e.message || 'No se pudo procesar el archivo.' });
+    res.status(500).json({ ok: false, message: 'No se pudo procesar el archivo.' });
   }
 });
 
